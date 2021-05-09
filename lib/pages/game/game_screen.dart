@@ -14,6 +14,9 @@ class _GameScreenWidgetState extends State<GameScreenWidget>
   //max level = 5;
   var levelController = 5;
 
+  //speed slide down
+  int speed = 7;
+
   //deslizar para baixo
   var _slideDownController;
   var offset;
@@ -21,6 +24,9 @@ class _GameScreenWidgetState extends State<GameScreenWidget>
   //positions
   double posx = 100.0;
   double posy = 100.0;
+
+  var randomNumber;
+  Color color = Colors.blue;
 
   double squarePositionXController = 144.0;
   double squarePositionYController = -80.0;
@@ -52,68 +58,71 @@ class _GameScreenWidgetState extends State<GameScreenWidget>
     setState(() {
       squarePositionXController = posx;
     });
-    print('$posx - fullsize: ${MediaQuery.of(context).size.width}');
   }
 
   @override
   void initState() {
     super.initState();
-
-    _slideDownController =
-        AnimationController(vsync: this, duration: Duration(seconds: 10));
-    Future.delayed(Duration(milliseconds: 100))
-        .then((_) => _slideDownController.forward());
-
-    offset = Tween<Offset>(begin: Offset.zero, end: Offset(0.0, 9.7))
-        .animate(_slideDownController);
+    _newSquare();
   }
 
   @override
   Widget build(BuildContext context) {
+    Positioned _buildPositionedSquares() {
+      return Positioned(
+        left: squarePositionXController,
+        top: squarePositionYController,
+        child: SlideTransition(
+          position: offset,
+          child: _buildSquare,
+        ),
+      );
+    }
+
+    Stack containerStack = Stack(
+      children: [_buildPositionedSquares()],
+    );
+    _slideDownController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        containerStack.children.add(_buildSquare);
+        _newSquare();
+      }
+    });
+
     return Scaffold(
       body: GestureDetector(
-        onTapDown: (TapDownDetails details) =>
-            {_moveSquareWhereDidType(details)},
-        child: Container(
-            color: Colors.black87,
-            width: double.maxFinite,
-            height: double.maxFinite,
-            padding: EdgeInsets.only(top: 35),
-            child: Stack(
-              children: [
-                Positioned(
-                  left: squarePositionXController,
-                  top: squarePositionYController,
-                  child: SlideTransition(
-                    position: offset,
-                    child: _buildSquare,
-                  ),
-                )
-              ],
-            )),
-      ),
+          onTapDown: (TapDownDetails details) =>
+              {_moveSquareWhereDidType(details)},
+          child: Container(
+              color: Colors.black87,
+              width: double.maxFinite,
+              height: double.maxFinite,
+              padding: EdgeInsets.only(top: 35),
+              child: containerStack)),
     );
   }
 
   _newSquare() {
-    var randomNumber;
-    Color color = Colors.black;
-
     switch (levelController) {
       case 1:
         randomNumber = Random().nextInt(5);
+        speed = 8;
         break;
       case 2:
         randomNumber = Random().nextInt(6);
+        speed = 6;
         break;
       case 3:
         randomNumber = Random().nextInt(7);
+        speed = 5;
         break;
       case 4:
         randomNumber = Random().nextInt(8);
+        speed = 4;
         break;
       case 5:
         randomNumber = Random().nextInt(9);
+        speed = 3;
         break;
       default:
     }
@@ -151,7 +160,14 @@ class _GameScreenWidgetState extends State<GameScreenWidget>
     setState(() {
       _buildSquare = SquareWidget(value: number, color: color);
     });
+    _slideDownController =
+        AnimationController(vsync: this, duration: Duration(seconds: speed));
+    Future.delayed(Duration(milliseconds: 100))
+        .then((_) => _slideDownController.forward());
+
+    offset = Tween<Offset>(begin: Offset.zero, end: Offset(0.0, 9.7))
+        .animate(_slideDownController);
   }
 
-  SquareWidget _buildSquare = SquareWidget(value: 16, color: Colors.black);
+  SquareWidget _buildSquare = SquareWidget(value: 16, color: Colors.blue);
 }
