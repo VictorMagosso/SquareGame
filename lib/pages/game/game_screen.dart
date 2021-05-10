@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:square_game/components/square_widget.dart';
 
 class GameScreenWidget extends StatefulWidget {
+  GameScreenWidget({Key? key}) : super(key: key);
   @override
   _GameScreenWidgetState createState() => _GameScreenWidgetState();
 }
@@ -17,13 +18,21 @@ class _GameScreenWidgetState extends State<GameScreenWidget>
   //speed slide down
   int speed = 7;
 
+  //widget key
+  late GlobalKey key;
+
   //deslizar para baixo
   var _slideDownController;
   var offset;
 
+  double finalPosition = 0;
+
   //positions
   double posx = 100.0;
   double posy = 100.0;
+
+  //listagem dos filhos (quadrados - Positioned)
+  List<Widget> positionedGenerated = [];
 
   var randomNumber;
   Color color = Colors.blue;
@@ -68,6 +77,16 @@ class _GameScreenWidgetState extends State<GameScreenWidget>
 
   @override
   Widget build(BuildContext context) {
+    _getFinishPosition() {
+      WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {
+        final RenderBox box =
+            key.currentContext!.findRenderObject() as RenderBox;
+        setState(() {
+          finalPosition = box.globalToLocal(Offset.zero).dy;
+        });
+      });
+    }
+
     Positioned _buildPositionedSquares() {
       return Positioned(
         left: squarePositionXController,
@@ -79,12 +98,29 @@ class _GameScreenWidgetState extends State<GameScreenWidget>
       );
     }
 
+//fixo, mas sempre acrescenta um novo
     Stack containerStack = Stack(
-      children: [_buildPositionedSquares()],
+      children: [],
     );
+
+    containerStack.children.addAll(positionedGenerated);
+
     _slideDownController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        containerStack.children.add(_buildSquare);
+        _getFinishPosition();
+        var newSquareToAdd = Positioned(
+          left: squarePositionXController,
+          bottom: finalPosition,
+          child: _buildSquare,
+        );
+        positionedGenerated.add(newSquareToAdd);
+        setState(() {
+          containerStack.children.remove(_buildPositionedSquares());
+          containerStack.children
+              .removeRange(0, containerStack.children.length);
+          containerStack.children.addAll(positionedGenerated);
+        });
+        print(containerStack.children.length);
         _newSquare();
       }
     });
