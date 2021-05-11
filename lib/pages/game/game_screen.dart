@@ -19,7 +19,7 @@ class _GameScreenWidgetState extends State<GameScreenWidget>
   int speed = 7;
 
   //widget key
-  late GlobalKey key;
+  // GlobalKey key = GlobalKey();
 
   //deslizar para baixo
   var _slideDownController;
@@ -32,7 +32,7 @@ class _GameScreenWidgetState extends State<GameScreenWidget>
   double posy = 100.0;
 
   //listagem dos filhos (quadrados - Positioned)
-  List<Widget> positionedGenerated = [];
+  List<Positioned> positionedGenerated = [];
 
   var randomNumber;
   Color color = Colors.blue;
@@ -77,16 +77,6 @@ class _GameScreenWidgetState extends State<GameScreenWidget>
 
   @override
   Widget build(BuildContext context) {
-    _getFinishPosition() {
-      WidgetsBinding.instance?.addPostFrameCallback((timeStamp) {
-        final RenderBox box =
-            key.currentContext!.findRenderObject() as RenderBox;
-        setState(() {
-          finalPosition = box.globalToLocal(Offset.zero).dy;
-        });
-      });
-    }
-
     Positioned _buildPositionedSquares() {
       return Positioned(
         left: squarePositionXController,
@@ -107,7 +97,17 @@ class _GameScreenWidgetState extends State<GameScreenWidget>
 
     _slideDownController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        _getFinishPosition();
+        if (positionedGenerated.length > 0) {
+          try {
+            Positioned? temp = positionedGenerated
+                .lastWhere((e) => e.left == squarePositionXController);
+            finalPosition =
+                temp.bottom! + MediaQuery.of(context).size.width / 5;
+          } catch (e) {
+            finalPosition = 0.0;
+          }
+        }
+
         var newSquareToAdd = Positioned(
           left: squarePositionXController,
           bottom: finalPosition,
