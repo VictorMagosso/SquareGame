@@ -64,15 +64,31 @@ class _GameScreenWidgetState extends State<GameScreenWidget>
     if (posx >= mobileScreenWidth / 1.25 - 0.01 && posx < mobileScreenWidth) {
       posx = 288;
     }
-    setState(() {
-      squarePositionXController = posx;
-    });
+    squarePositionXController = posx;
+    setState(() {});
+  }
+
+  void _initAnim() {
+    _slideDownController =
+        AnimationController(vsync: this, duration: Duration(seconds: speed));
+    Future.delayed(Duration(milliseconds: 100))
+        .then((_) => _slideDownController.forward());
+
+    offset = Tween<Offset>(begin: Offset.zero, end: Offset(0.0, 9.7))
+        .animate(_slideDownController);
+  }
+
+  @override
+  void dispose() {
+    _slideDownController.dispose();
+    super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
     _newSquare();
+    _initAnim();
   }
 
   @override
@@ -114,15 +130,13 @@ class _GameScreenWidgetState extends State<GameScreenWidget>
           child: _buildSquare,
         );
         positionedGenerated.add(newSquareToAdd);
-        setState(() {
-          containerStack.children.remove(_buildPositionedSquares());
-          containerStack.children
-              .removeRange(0, containerStack.children.length);
-          containerStack.children.addAll(positionedGenerated);
-        });
+        containerStack.children.remove(_buildPositionedSquares());
+        containerStack.children.removeRange(0, containerStack.children.length);
+        containerStack.children.addAll(positionedGenerated);
         print(containerStack.children.length);
         _newSquare();
       }
+      _initAnim();
     });
 
     return Scaffold(
@@ -196,13 +210,6 @@ class _GameScreenWidgetState extends State<GameScreenWidget>
     setState(() {
       _buildSquare = SquareWidget(value: number, color: color);
     });
-    _slideDownController =
-        AnimationController(vsync: this, duration: Duration(seconds: speed));
-    Future.delayed(Duration(milliseconds: 100))
-        .then((_) => _slideDownController.forward());
-
-    offset = Tween<Offset>(begin: Offset.zero, end: Offset(0.0, 9.7))
-        .animate(_slideDownController);
   }
 
   SquareWidget _buildSquare = SquareWidget(value: 16, color: Colors.blue);
